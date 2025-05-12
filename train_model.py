@@ -4,7 +4,8 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
-import pickle
+import joblib
+import os
 
 # Load synthetic dataset
 df = pd.read_csv('accidents.csv')
@@ -29,7 +30,7 @@ df = pd.get_dummies(df, columns=['Weather_Condition'], drop_first=True)
 # Save feature names for Streamlit app
 feature_names = df.drop('Severity', axis=1).columns.tolist()
 with open('feature_names.pkl', 'wb') as f:
-    pickle.dump(feature_names, f)
+    joblib.dump(feature_names, f)
 
 # Split dataset into X and y
 X = df.drop('Severity', axis=1)
@@ -38,13 +39,13 @@ y = df['Severity']
 # Train/Test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Model training
-model = RandomForestClassifier(n_estimators=100, random_state=42)
+# Model training with minimal trees
+model = RandomForestClassifier(n_estimators=10, random_state=42)
 model.fit(X_train, y_train)
 
 # Save the trained model
 with open('model.pkl', 'wb') as f:
-    pickle.dump(model, f)
+    joblib.dump(model, f)
 
 # Prediction
 y_pred = model.predict(X_test)
@@ -62,3 +63,9 @@ plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.savefig('confusion_matrix.png')
 plt.show()
+
+# Verify model.pkl size
+model_size = os.path.getsize('model.pkl') / 1024**2
+print(f"model.pkl size: {model_size:.2f} MB")
+if model_size > 20:
+    print("Warning: model.pkl exceeds 20MB. Reduce n_estimators or Weather_Condition categories further.")
