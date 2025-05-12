@@ -1,55 +1,71 @@
-import streamlit as st
 import pandas as pd
-import pickle
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+import joblib
+import os
 
-# Load model and feature names
-with open('model.pkl', 'rb') as f:
-    model = pickle.load(f)
-with open('feature_names.pkl', 'rb') as f:
-    feature_names = pickle.load(f)
+# Load synthetic dataset
+df = pd.read_csv('accidents.csv')
 
-# App title
-st.title("AI-Driven Traffic Accident Severity Prediction")
-st.write("Enter weather and environmental conditions to predict accident severity.")
+# Display basic info
+print("Dataset head:")
+print(df.head())
+print("\nWeather Condition values:")
+print(df['Weather_Condition'].unique())
 
-# User inputs
-temperature = st.slider("Temperature (°F)", -20.0, 120.0, 70.0, help="Temperature in Fahrenheit")
-humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0, help="Relative humidity percentage")
-pressure = st.slider("Pressure (in)", 20.0, 35.0, 29.92, help="Atmospheric pressure in inches")
-visibility = st.slider("Visibility (mi)", 0.0, 10.0, 5.0, help="Visibility distance in miles")
-wind_speed = st.slider("Wind Speed (mph)", 0.0, 50.0, 10.0, help="Wind speed in miles per hour")
+# Drop rows with missing values
+df.dropna(inplace=True)
 
-# Weather condition dropdown (matches synthetic dataset)
-weather_conditions = ['Clear', 'Rain', 'Snow', 'Fog', 'Cloudy', 'Thunderstorm', 'Haze']
-weather = st.selectbox("Weather Condition", weather_conditions, help="Select the current weather condition")
+# Select relevant features
+features = ['Severity', 'Temperature(F)', 'Humidity(%)', 'Pressure(in)', 
+            'Visibility(mi)', 'Wind_Speed(mph)', 'Weather_Condition']
+df = df[features]
 
-# Create input DataFrame
-input_data = pd.DataFrame(0, index=[0], columns=feature_names)
-input_data['Temperature(F)'] = temperature
-input_data['Humidity(%)'] = humidity
-input_data['Pressure(in)'] = pressure
-input_data['Visibility(mi)'] = visibility
-input_data['Wind_Speed(mph)'] = wind_speed
+# Convert categorical data to numeric
+df = pd.get_dummies(df, columns=['Weather_Condition'], drop_first=True)
 
-# Set the selected weather condition dummy variable to 1
-if weather != 'Clear':  # Assuming 'Clear' is the reference category
-    weather_col = f"Weather_Condition_{weather}"
-    if weather_col in input_data.columns:
-        input_data[weather_col] = 1
+# Save feature names for Streamlit app
+feature_names = df.drop('Severity', axis=1).columns.tolist()
+with open('feature_names.pkl', 'wb') as f:
+    joblib.dump(feature_names, f)
 
-# Predict
-if st.button("Predict"):
-    prediction = model.predict(input_data)[0]
-    st.success(f"Predicted Accident Severity: **{prediction}**")
+# Split dataset into X and y
+X = df.drop('Severity', axis=1)
+y = df['Severity']
 
-# Feature importance plot
-st.subheader("Feature Importance")
-fig, ax = plt.subplots(figsize=(10, 6))
-feature_importance = pd.Series(model.feature_importances_, index=feature_names)
-sns.barplot(x=feature_importance.values, y=feature_importance.index, ax=ax)
-ax.set_xlabel("Importance")
-ax.set_title("Feature Importance in RandomForestClassifier")
-st.pyplot(fig)
+# Train/Test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Model training with minimal trees
+model = RandomForestClassifier(n_estimators=10, random_state=42)
+model.fit(X_train, y_train)
+
+# Save the trained model
+with open('model.pkl', 'wb') as f:
+    joblib.dump(model, f)
+
+# Prediction
+y_pred = model.predict(X_test)
+
+# Evaluation
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.savefig('confusion_matrix.png')
+plt.show()
+
+# Verify model.pkl size
+model_size = os.path.getsize('model.pkl') / 1024**2
+print(f"model.pkl size: {model_size:.2f} MB")
+if model_size > 20:
+    print("Warning: model.pkl exceeds 20MB. Reduce n_estimators or Weather_Condition categories further.")
