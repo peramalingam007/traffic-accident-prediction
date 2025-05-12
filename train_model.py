@@ -39,8 +39,8 @@ y = df['Severity']
 # Train/Test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Model training with minimal trees
-model = RandomForestClassifier(n_estimators=10, random_state=42)
+# Model training
+model = RandomForestClassifier(n_estimators=20, random_state=42)
 model.fit(X_train, y_train)
 
 # Save the trained model
@@ -67,5 +67,3 @@ plt.show()
 # Verify model.pkl size
 model_size = os.path.getsize('model.pkl') / 1024**2
 print(f"model.pkl size: {model_size:.2f} MB")
-if model_size > 20:
-    print("Warning: model.pkl exceeds 20MB. Reduce n_estimators or Weather_Condition categories further.")
