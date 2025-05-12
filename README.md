@@ -12,9 +12,7 @@ graph TD
     A --> F[train_model.py]
     A --> G[generate_dataset.py]
     A --> H[accidents.csv]
-    A --> I[model.pkl]
-    A --> J[feature_names.pkl]
-    A --> K[LICENSE]
+    A --> I[LICENSE]
 
 Workflow
 
@@ -109,15 +107,27 @@ Dataset Generation:
 
 
 
-The repository includes accidents.csv. To regenerate it, run generate_dataset.py in Colab or locally:
+The repository includes accidents.csv. To regenerate it, run generate_dataset.py:
 
 python generate_dataset.py
 
+Model Generation
+
+The model.pkl and feature_names.pkl files are not included in the repository to keep it lightweight. To generate them:
 
 
-This creates a new accidents.csv with synthetic data mimicking traffic accident patterns.
 
-Note: Synthetic data is used for size constraints and ease of use in Colab. For production, consider sampling the US-Accidents dataset.
+
+
+Run train_model.py after generating accidents.csv:
+
+python train_model.py
+
+
+
+This creates model.pkl (~48MB) and feature_names.pkl (~1KB) locally.
+
+Note: model.pkl is large but regenerated on demand, avoiding GitHub size limits.
 
 Setup
 
@@ -144,13 +154,9 @@ python generate_dataset.py
 
 
 
-Train the model:
+Generate model:
 
-
-
-
-
-Run train_model.py in Colab or locally to generate model.pkl and feature_names.pkl.
+python train_model.py
 
 
 
@@ -164,7 +170,7 @@ Files
 
 
 
-.gitignore: Excludes temporary files.
+.gitignore: Excludes temporary files, model.pkl, and feature_names.pkl.
 
 
 
@@ -176,7 +182,7 @@ requirements.txt: Python dependencies.
 
 
 
-app.py: Streamlit web app code.
+app.py: Streamlit web app code, regenerates .pkl files if missing.
 
 
 
@@ -189,14 +195,6 @@ generate_dataset.py: Script to generate synthetic accidents.csv.
 
 
 accidents.csv: Synthetic dataset (~2-5MB).
-
-
-
-model.pkl: Trained RandomForestClassifier model (generated).
-
-
-
-feature_names.pkl: List of feature names for the model (generated).
 
 
 
@@ -214,7 +212,7 @@ Upload app.py, train_model.py, generate_dataset.py, and (optionally) accidents.c
 
 Install dependencies:
 
-!pip install streamlit>=1.20.0 scikit-learn>=1.2.0 pandas>=1.5.0 numpy>=1.23.0 matplotlib>=3.6.0 seaborn>=0.12.0 pyngrok
+!pip install streamlit>=1.20.0 scikit-learn>=1.2.0 pandas>=1.5.0 numpy>=1.23.0 matplotlib>=3.6.0 seaborn>=0.12.0 joblib>=1.2.0 pyngrok
 
 
 
@@ -224,7 +222,9 @@ Generate dataset (if needed):
 
 
 
-Run train_model.py to generate .pkl files.
+Generate model:
+
+!python train_model.py
 
 
 
@@ -255,6 +255,10 @@ Sign in with GitHub.
 
 
 Create a new app, select this repository, and set app.py as the main file.
+
+
+
+The app automatically regenerates model.pkl and feature_names.pkl if missing.
 
 
 
