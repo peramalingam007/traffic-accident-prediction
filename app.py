@@ -5,17 +5,48 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import subprocess
+import time
 
-# Regenerate model.pkl and feature_names.pkl if missing
-if not os.path.exists('model.pkl') or not os.path.exists('feature_names.pkl'):
-    st.info("Generating model files, please wait...")
-    os.system('python train_model.py')
+# Function to generate model files
+def generate_model_files():
+    if not os.path.exists('accidents.csv'):
+        st.error("accidents.csv not found. Please run generate_dataset.py first.")
+        return False
+    if not os.path.exists('train_model.py'):
+        st.error("train_model.py not found. Please ensure it is in the repository.")
+        return False
+    
+    st.info("Generating model.pkl and feature_names.pkl...")
+    try:
+        # Run train_model.py and capture output
+        result = subprocess.run(['python', 'train_model.py'], capture_output=True, text=True)
+        if result.returncode != 0:
+            st.error(f"Error running train_model.py:\n{result.stderr}")
+            return False
+        if not (os.path.exists('model.pkl') and os.path.exists('feature_names.pkl')):
+            st.error("Model files were not generated. Check train_model.py output.")
+            return False
+        return True
+    except Exception as e:
+        st.error(f"Exception while running train_model.py: {str(e)}")
+        return False
+
+# Regenerate model files if missing
+if not (os.path.exists('model.pkl') and os.path.exists('feature_names.pkl')):
+    success = generate_model_files()
+    if not success:
+        st.stop()
 
 # Load model and feature names
-with open('model.pkl', 'rb') as f:
-    model = joblib.load(f)
-with open('feature_names.pkl', 'rb') as f:
-    feature_names = joblib.load(f)
+try:
+    with open('model.pkl', 'rb') as f:
+        model = joblib.load(f)
+    with open('feature_names.pkl', 'rb') as f:
+        feature_names = joblib.load(f)
+except Exception as e:
+    st.error(f"Error loading model files: {str(e)}")
+    st.stop()
 
 # App title
 st.title("Traffic Accident Severity Prediction")
@@ -44,8 +75,11 @@ if weather != 'Clear':
 
 # Predict
 if st.button("Predict"):
-    prediction = model.predict(input_data)[0]
-    st.success(f"Predicted Severity: {prediction}")
+    try:
+        prediction = model.predict(input_data)[0]
+        st.success(f"Predicted Severity: {prediction}")
+    except Exception as e:
+        st.error(f"Prediction error: {str(e)}")
 
 # Feature importance plot
 st.subheader("Feature Importance")
