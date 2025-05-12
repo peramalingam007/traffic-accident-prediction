@@ -12,4 +12,4 @@ Miscellaneous
 
 Large files
 
-*.zip
+*.zip model.pkl feature_names.pkl
