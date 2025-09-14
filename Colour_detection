@@ -58,13 +58,14 @@ def detect_colors(image_path, output_dir="output"):
                 cv2.imwrite(output_path, result)
                 print(f"Saved {color_name} detection to {output_path}")
 
-                # Optional: Display the result (comment out if not needed)
+                # Optional: Display the result (uncomment if needed)
                 # cv2.imshow(f"{color_name} detection", result)
+                # cv2.waitKey(0)
 
             except Exception as e:
                 print(f"Error processing color {color_name}: {str(e)}")
 
-        # Optional: Display original image (comment out if not needed)
+        # Optional: Display original image (uncomment if needed)
         # cv2.imshow("Original Image", image)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
@@ -74,7 +75,7 @@ def detect_colors(image_path, output_dir="output"):
 
 def main():
     # Example usage
-    image_path = "image.jpg"  # Replace with your image path
+    image_path = "Colour_detection/image.jpg"  # Update this path to your image
     output_dir = "color_detection_output"  # Output directory
 
     try:
